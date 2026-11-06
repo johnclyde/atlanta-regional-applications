@@ -56,7 +56,7 @@ uv run python tests/test_application.py
 node tests/test_core.cjs
 ```
 
-GitHub account billing is outside this project's scope. Local verification is recorded independently of hosted CI availability. GitHub Issues are disabled; work is coordinated in the owner's private records.
+Local verification is recorded in [VERIFICATION.md](VERIFICATION.md). The repository includes a manually triggered CI workflow. GitHub Issues are disabled; work is coordinated in the owner's private records.
 
 ## John Clyde / VentiMath
 

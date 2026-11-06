@@ -24,6 +24,8 @@ The tests use isolated temporary state. They do not alter an operating installat
 
 Remaining client acceptance: Entra tenant integration with real assigned/unassigned staff and Conditional Access, approved final indicators and targets, source inventory beyond this demo catalog, negotiated load/availability targets, ARC-specific NIST/FedRAMP control evidence, backup/restore rehearsal in the production account, final branding and accessibility/user acceptance. No external penetration test or production compliance certification is claimed.
 
-GitHub-hosted checks may be unavailable because of account billing; no hosted-CI success is inferred from these local results.
+The repository includes a manually triggered CI workflow. It has not been run; these are local verification results.
 
 The release also initializes from an empty folder, serves all three county datasets from its bundled public cache with network access disabled, and rejects anonymous publication.
+
+The deployed HTTPS site was checked on November 5, 2026 (Pacific): all seven public routes and the health endpoint returned 200, and deployed JavaScript/CSS matched the release source. All three applications loaded their data in a browser. Keyboard selection of Fulton produced 534,663 housing units and 40,707 net additions. A File GDB downloaded from the deployed Linux service contained the selected Fulton feature, EPSG:3857 and the native rent-field alias.
