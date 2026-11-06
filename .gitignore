@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+site/state/
+.env
+*.env
+sources/
+proposal/
+output/
+work/
+public-repo/

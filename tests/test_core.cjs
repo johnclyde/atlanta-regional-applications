@@ -1,0 +1,13 @@
+const assert=require('node:assert/strict');const C=require('../site/static/core.js');
+assert.equal(C.number(null),null);assert.equal(C.number(''),null);assert.equal(C.number('0'),0);assert.equal(C.number('NaN'),null);
+assert.equal(C.fmt(12.345,'percent'),'12.3%');assert.equal(C.fmt(null),'Not available');
+assert.deepEqual(C.breaks([null,1,1,1]),[1]);assert.deepEqual(C.breaks([0,10,20,30,40],'equal'),[8,16,24,32]);assert.equal(C.color(null,[]),'#d7dbd7');
+const features=[{properties:{GEOID:'001',label:'A',region:true}},{properties:{GEOID:'002',label:'B',region:false}}];
+let rows=C.joinRows(features,[{GEOID:'001',value:0},{GEOID:'002',value:5}],{join:'code',fields:['custom'],rows:[{code:'001',custom:'7'}]});
+assert.equal(rows[0].value,0);assert.equal(rows[0]['user.custom'],7);assert.equal(rows[1]['user.custom'],null);
+assert.equal(C.filterRows(rows,{scope:'region',metric:'value',min:'',max:'',search:''}).length,1);
+assert.equal(C.filterRows(rows,{scope:'state',metric:'value',min:'1',max:'9',search:''})[0].Name,'B');
+assert.equal(C.filterRows(rows,{scope:'state',metric:'value',min:'',max:'',search:'a'})[0].GEOID,'001');
+assert.equal(C.progress({baseline:100,current:75,target:50}),50);assert.equal(C.progress({baseline:0,current:0,target:0}),null);
+assert.throws(()=>C.validateSession({version:1}));assert.equal(C.esc('<script>'),'&lt;script&gt;');
+console.log('18 core checks passed: missing values, formatting, classification, geographic joins, combined filters, progress and session validation.');

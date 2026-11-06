@@ -1,0 +1,12 @@
+Copyright (c) 2026 John Clyde.
+
+The original application code retains its existing copyright. Publication
+allows source inspection and local evaluation; it does not apply a general
+open-source license to the custom application. Commercial adoption and
+source rights are set by agreement.
+
+Leaflet is distributed under the BSD 2-Clause License. Its notice is preserved
+in site/static/vendor/leaflet/LICENSE.txt.
+
+Public project information, datasets and third-party software retain their
+respective owners' rights. See THIRD_PARTY_NOTICES.md for attribution.

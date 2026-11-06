@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Explore Georgia data, regional housing and economic mobility with interactive maps, charts and downloadable data."
+    />
+    <title>Atlanta regional applications</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23163f45'/%3E%3Cpath d='M8 29L17 10L22 22L28 15L33 29Z' fill='%23b9dacc'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="/static/vendor/leaflet/leaflet.css" />
+    <link rel="stylesheet" href="/static/styles.css" />
+    <script defer src="/static/vendor/leaflet/leaflet.js"></script>
+    <script defer src="/static/core.js"></script>
+    <script defer src="/static/app.js"></script>
+    <script defer src="/static/admin.js"></script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header>
+      <div class="brand">
+        <a href="/housing" aria-label="Atlanta regional applications home"
+          ><span class="brand-icon" aria-hidden="true">▥</span> Atlanta regional
+          applications</a
+        ><span>VentiMath</span>
+      </div>
+      <nav aria-label="Applications">
+        <a href="/explorer">Data explorer</a><a href="/housing">Housing</a
+        ><a href="/mobility">Economic mobility</a
+        ><a href="/admin">Staff workspace</a
+        ><a href="/guide">Guide & sources</a>
+      </nav>
+    </header>
+    <main id="main" tabindex="-1">
+      <p class="loading">Loading regional data…</p>
+    </main>
+    <footer>
+      <span
+        >Independent demonstration prepared by John Clyde. Public data credited
+        at each view.</span
+      >
+      <div>
+        <a href="/delivery">Delivery & timeline</a
+        ><a href="/about">About this project</a
+        ><a
+          href="https://github.com/johnclyde/atlanta-regional-applications"
+          target="_blank"
+          rel="noopener"
+          >Source code</a
+        >
+      </div>
+    </footer>
+    <div id="notice" role="status" aria-live="polite"></div>
+    <dialog id="dialog">
+      <div class="dialog-head">
+        <h2 id="dialog-title"></h2>
+        <button id="dialog-close" aria-label="Close dialog">Close</button>
+      </div>
+      <div id="dialog-body"></div>
+    </dialog>
+  </body>
+</html>

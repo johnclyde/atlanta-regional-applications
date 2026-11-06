@@ -1,0 +1,9 @@
+**/.venv
+**/__pycache__
+site/state
+.git
+work
+sources
+proposal
+output
+public-repo

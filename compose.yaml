@@ -1,0 +1,23 @@
+services:
+  regional:
+    build: .
+    ports:
+      - "127.0.0.1:8788:8788"
+    environment:
+      ARC_ORIGIN: ${ARC_ORIGIN:-http://127.0.0.1:8788}
+      ARC_OWNER_HASH: ${ARC_OWNER_HASH:-}
+      ARC_ENTRA_TENANT: ${ARC_ENTRA_TENANT:-}
+      ARC_ENTRA_CLIENT: ${ARC_ENTRA_CLIENT:-}
+      ARC_ENTRA_SECRET: ${ARC_ENTRA_SECRET:-}
+    volumes:
+      - regional-state:/state
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 640m
+    pids_limit: 100
+    restart: unless-stopped
+volumes:
+  regional-state:
