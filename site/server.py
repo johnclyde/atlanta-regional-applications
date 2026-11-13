@@ -9,6 +9,7 @@ import json
 import os
 import re
 import secrets
+import sqlite3
 import time
 from collections import defaultdict, deque
 from pathlib import Path
@@ -16,6 +17,7 @@ from pathlib import Path
 import formats
 import providers
 import store
+import visit_reporting
 from authlib.integrations.starlette_client import OAuth
 from starlette.applications import Starlette
 from starlette.concurrency import run_in_threadpool
@@ -40,6 +42,10 @@ MAX_BODY = 32 * 1024 * 1024
 semaphore = asyncio.Semaphore(2)
 rates = defaultdict(deque)
 store.init()
+VISIT_DB = store.STATE / "demo-visits.sqlite3"
+if visit_reporting.ENABLED:
+    with sqlite3.connect(VISIT_DB) as connection:
+        visit_reporting.initialize(connection)
 oauth = OAuth()
 if TENANT and CLIENT:
     if not re.fullmatch("[a-fA-F0-9-]{36}", TENANT):
@@ -117,6 +123,30 @@ async def health(request):
             "geographies": len(c["geographies"]),
         }
     )
+
+
+async def visit_config(request):
+    return JSONResponse({"enabled": visit_reporting.ENABLED and not bool(who(request))})
+
+
+async def visit_event(request):
+    same_origin(request)
+    if not visit_reporting.ENABLED or who(request):
+        return JSONResponse({"recorded": False})
+    raw = await request.body()
+    if len(raw) > 1024:
+        return JSONResponse({"error": "Visit event too large."}, status_code=413)
+    event = visit_reporting.valid_event(json.loads(raw))
+    address = visit_reporting.client_address(
+        request.client.host if request.client else "",
+        request.headers.get("x-forwarded-for", ""),
+    )
+
+    def save():
+        with sqlite3.connect(VISIT_DB, timeout=10) as connection:
+            return visit_reporting.record(connection, event, address)
+
+    return JSONResponse(await run_in_threadpool(save))
 
 
 async def catalog(request):
@@ -535,6 +565,8 @@ async def error(request, exc):
 
 routes = [
     Route("/api/health", health),
+    Route("/api/visit-config", visit_config),
+    Route("/api/visit", visit_event, methods=["POST"]),
     Route("/api/catalog", catalog),
     Route("/api/indicators", indicators),
     Route("/api/geography", geographic),
@@ -675,4 +707,5 @@ if __name__ == "__main__":
         host=os.environ.get("ARC_BIND", "127.0.0.1"),
         port=int(os.environ.get("PORT", "8788")),
         access_log=False,
+        proxy_headers=False,
     )

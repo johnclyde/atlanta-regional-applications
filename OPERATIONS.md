@@ -13,8 +13,15 @@ Python 3.12 is the supported runtime. `pyproject.toml` declares dependencies and
 | `ARC_SESSION_SECRET` | Random session signing key, supplied as a secret or generated inside private state. |
 | `ARC_ENTRA_TENANT`, `ARC_ENTRA_CLIENT`, `ARC_ENTRA_SECRET` | Client-controlled Microsoft tenant, application ID and credential. |
 | `ARC_SOURCE_HOSTS` | Operator-only extra approved ArcGIS hostnames, comma separated. Do not add internal endpoints. |
+| `ARC_DEMO_REPORTING` | Optional private evaluation-host visit reporting; defaults to `0`. Leave disabled for client handover. |
+| `ARC_GEO_DB` | Offline DB-IP City Lite database path, only for enabled demo reporting. |
+| `ARC_TRUSTED_PROXIES` | Exact trusted proxy addresses for coarse location lookup. Owner Docker host uses its verified bridge gateway. |
 
 The public workspace is a practice draft stored in tab session storage. Clearing that browser storage loses practice changes. Download a catalog to retain them. Public practice does not grant publication privileges.
+
+Optional evaluation reporting records visible public-page opens, UTC times, anonymous tab sessions and approximate city/region/country. IP addresses are used only transiently for local lookup and rate limiting; raw IPs, form contents, query strings and referrers are not stored. Browser sessions expire after 30 minutes of inactivity. Signed-in staff are excluded. Opening `/?visit=off` once stores an owner/test exclusion in that browser. Reports are private through the host's existing IAP/SSH access; no public report endpoint or shared token is exposed. Records live in a separate `demo-visits.sqlite3`, retained for 90 days with a 200,000-record cap. Location data may reflect a VPN, carrier or provider and does not identify a person. Attribution: [IP Geolocation by DB-IP](https://db-ip.com), City Lite November 2026, CC BY 4.0.
+
+The owner’s Codex digest and cursor files are outside deployment packages. Handover excludes visit state, geodata, runtime settings and the owner automation. Set `ARC_DEMO_REPORTING=0`, verify `/api/visit-config` is disabled, and disable the owner's digest if handing over the evaluation host itself. Newly deployed copies have reporting off by default.
 
 The demonstration runs on an existing Google Cloud US host, isolated from other applications by container, user, persistent directory, loopback port and service. That is not a representation that the owner's account satisfies ARC's production authorization requirements. Production provisioning must use the approved US account, IAM, organizational controls, logs, backup location and access restrictions agreed with ARC. No changes to the public demo constitute ARC acceptance.
 
