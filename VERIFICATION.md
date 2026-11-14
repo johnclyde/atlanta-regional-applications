@@ -1,5 +1,13 @@
 # Verification record
 
+## November 14, 2026 — place search
+
+Find a place searches cities, counties and the selected geography across all available areas. Enter and Find submit the search; an exact or single result opens directly, while ambiguous names show labeled choices. Choosing a place updates geography and area, selects its data and fits the map. An unmatched query shows an explanation without clearing the current view.
+
+Verified in the browser on Housing, Data explorer and Economic mobility: Macon-Bibb versus Macon County, an exact geographic ID, searches before initial indicator loading completes, no-result feedback, clearing filters, and keyboard selection. A 390-pixel phone viewport shows both choices without horizontal overflow. The 45 Python tests, 18 existing JavaScript checks and 12 place-search checks pass. The new checks cover ambiguous names, exact names and IDs, statewide matching, punctuation/case/spacing, district names, duplicate records and empty results.
+
+## Original application verification
+
 Verified November 5, 2026. These results describe the independent demonstration, not ARC's eventual production acceptance.
 
 - **Toolchain:** uv 0.13.7 with a committed lockfile; Ruff 0.17.4 lint/format checks and ty 0.0.98 type checks pass. Black is not a dependency.
@@ -18,6 +26,7 @@ uv run ruff format --check
 uv run ty check
 uv run python tests/test_application.py
 node tests/test_core.cjs
+node tests/test_place_search.cjs
 ```
 
 The tests use isolated temporary state. They do not alter an operating installation. Source-provider checks and manual browser downloads use the public ARC/Census data; deterministic tests do not depend on those providers being online.

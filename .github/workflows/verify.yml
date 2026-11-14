@@ -23,3 +23,4 @@ jobs:
       - run: uv run ty check
       - run: uv run python tests/test_application.py
       - run: node tests/test_core.cjs
+      - run: node tests/test_place_search.cjs

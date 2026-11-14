@@ -104,6 +104,45 @@ label.inline {
   font-weight: 400;
   font-size: 14px;
 }
+.place-input {
+  display: flex;
+  gap: 7px;
+  margin-top: 5px;
+}
+.place-input input {
+  flex: 1;
+  width: 100%;
+}
+.place-help, .place-status {
+  font-size: 13px;
+  line-height: 1.45;
+  margin: 8px 0;
+}
+.place-status:empty {
+  display: none;
+}
+.place-results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.place-results button {
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 2px;
+  overflow-wrap: anywhere;
+}
+.place-results strong {
+  font-size: 14px;
+}
+.place-results span {
+  color: var(--muted);
+  font-size: 12px;
+}
 h1,
 h2,
 h3,

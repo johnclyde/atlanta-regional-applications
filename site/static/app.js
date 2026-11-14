@@ -39,6 +39,8 @@ let catalog,
   customLayer,
   renderId = 0,
   noticeTimer;
+let placeRequest = 0, placeTimer;
+const placeSources = new Map();
 function toast(s) {
   $("#notice").textContent = s;
   $("#notice").style.display = "block";
@@ -120,6 +122,9 @@ function bind(selector, event, fn) {
   if (e) e.addEventListener(event, fn);
 }
 function appHtml() {
+  clearTimeout(placeTimer);
+  placeRequest++;
+  placeSources.clear();
   let isExplore = state.page === "explorer",
     isHousing = state.page === "housing";
   let title =
@@ -135,7 +140,7 @@ function appHtml() {
       ? "Housing production, affordability and conditions across the 11-county Atlanta region."
       : "Explore income, education, employment and access across the Atlanta region. Demonstration measures use published ACS data; ARC will define its final mobility measures.";
   $("#main").innerHTML =
-    `<div class="page-top"><div><div class="eyebrow">${isExplore ? "Statewide data" : isHousing ? "Housing Forward 2035" : "Regional conditions"}</div><h1>${title}</h1><p>${intro}</p></div><div class="actions"><button id="save-session">Save session</button><button id="load-session">Open session</button><button class="primary" id="export">Download</button><input type="file" id="session-file" accept=".json" hidden></div></div><div id="stats" class="stats"></div><div class="workspace"><aside class="panel controls" aria-label="Data and map controls"><h2>Explore the data</h2><div class="control-grid"><label>Geography<select id="geography">${opts(catalog.geographies, state.geo)}</select></label><label>Area<select id="scope"><option value="region">Atlanta 11-county region</option><option value="state">All available areas</option></select></label></div><label>Find a place<input id="place-search" type="search" placeholder="County, city or district name"></label><div id="selected-places" class="selection"></div><div class="rule"><h2>Indicators</h2><div id="indicator-chips"></div><button class="full" id="browse">Browse ${new Intl.NumberFormat().format(catalog.datasets.reduce((n, d) => n + d.fields.filter((f) => !f.moe).length, 0))} indicators</button><label>Color the map by<select id="metric"></select></label></div><div class="rule"><h2>Map settings</h2><label>Basemap<select id="basemap"><option value="streets">Street map</option><option value="imagery">Aerial imagery</option><option value="none">Boundaries only</option></select></label><div class="control-row"><label>Color<select id="ramp"><option value="teal">Teal</option><option value="purple">Purple</option><option value="blue">Blue</option></select></label><label>Classes<select id="binning"><option value="quantile">Quantiles</option><option value="equal">Equal intervals</option><option value="stddev">Standard deviation</option></select></label></div><div class="control-row"><label>Minimum<input id="min" type="number" step="any" placeholder="Any"></label><label>Maximum<input id="max" type="number" step="any" placeholder="Any"></label></div><button id="reset" class="full">Clear selections & filters</button></div><div class="rule"><button class="full" id="import">Add your data</button><p class="small muted">Join a spreadsheet by geographic ID or add a spatial layer. Your file is private to this session.</p><div id="custom-summary"></div></div></aside><div><section class="panel map-panel"><div class="panel-head"><div><h2 id="map-title">Loading indicators…</h2><p id="map-subtitle"></p></div><button id="fit" aria-label="Fit map to visible geography">Fit map</button></div><div id="map" role="region" aria-label="Interactive geography map. The same values and selection controls are available in the table below."></div><div class="map-bottom"><div id="legend" class="legend"></div><span id="row-count" class="small muted"></span></div></section><div class="below-map"><section class="panel"><div class="chart-toolbar"><h2>Compare places</h2><select id="compare-mode" aria-label="Comparison chart type"><option value="bar">Bar chart</option><option value="scatter">Scatterplot</option></select></div><label id="y-label" hidden>Compare with<select id="y-metric"></select></label><div id="comparison" class="chart"></div><p class="source-note">Select a bar or point to highlight its geography on the map. Use the table for every value.</p></section><section class="panel"><h2>Distribution</h2><div id="histogram" class="chart"></div><p class="source-note">Select a range to filter the map, charts and table together.</p><div id="selection-detail"></div></section></div><section class="panel table-panel"><div class="panel-head" style="padding:0 0 14px"><div><h2>Data table</h2><p id="table-count"></p></div><button id="select-visible">Select visible places</button></div><div class="table-wrap" id="table"></div><div class="pager"><button id="prev">Previous</button><span id="page-number" class="small"></span><button id="next">Next</button></div><p id="data-source" class="source-note"></p></section></div></div><div id="context-section"></div>`;
+    `<div class="page-top"><div><div class="eyebrow">${isExplore ? "Statewide data" : isHousing ? "Housing Forward 2035" : "Regional conditions"}</div><h1>${title}</h1><p>${intro}</p></div><div class="actions"><button id="save-session">Save session</button><button id="load-session">Open session</button><button class="primary" id="export">Download</button><input type="file" id="session-file" accept=".json" hidden></div></div><div id="stats" class="stats"></div><div class="workspace"><aside class="panel controls" aria-label="Data and map controls"><h2>Explore the data</h2><div class="control-grid"><label>Geography<select id="geography">${opts(catalog.geographies, state.geo)}</select></label><label>Area<select id="scope"><option value="region">Atlanta 11-county region</option><option value="state">All available areas</option></select></label></div><form id="place-form" role="search" aria-label="Find a place"><label for="place-search">Find a place</label><div class="place-input"><input id="place-search" type="search" placeholder="City, county or district" autocomplete="off" aria-describedby="place-help place-status"><button type="submit">Find</button></div><p id="place-help" class="place-help muted">Search cities, counties or the selected geography.</p><p id="place-status" class="place-status" role="status" aria-live="polite"></p><ul id="place-results" class="place-results" aria-label="Matching places"></ul></form><div id="selected-places" class="selection"></div><div class="rule"><h2>Indicators</h2><div id="indicator-chips"></div><button class="full" id="browse">Browse ${new Intl.NumberFormat().format(catalog.datasets.reduce((n, d) => n + d.fields.filter((f) => !f.moe).length, 0))} indicators</button><label>Color the map by<select id="metric"></select></label></div><div class="rule"><h2>Map settings</h2><label>Basemap<select id="basemap"><option value="streets">Street map</option><option value="imagery">Aerial imagery</option><option value="none">Boundaries only</option></select></label><div class="control-row"><label>Color<select id="ramp"><option value="teal">Teal</option><option value="purple">Purple</option><option value="blue">Blue</option></select></label><label>Classes<select id="binning"><option value="quantile">Quantiles</option><option value="equal">Equal intervals</option><option value="stddev">Standard deviation</option></select></label></div><div class="control-row"><label>Minimum<input id="min" type="number" step="any" placeholder="Any"></label><label>Maximum<input id="max" type="number" step="any" placeholder="Any"></label></div><button id="reset" class="full">Clear selections & filters</button></div><div class="rule"><button class="full" id="import">Add your data</button><p class="small muted">Join a spreadsheet by geographic ID or add a spatial layer. Your file is private to this session.</p><div id="custom-summary"></div></div></aside><div><section class="panel map-panel"><div class="panel-head"><div><h2 id="map-title">Loading indicators…</h2><p id="map-subtitle"></p></div><button id="fit" aria-label="Fit map to visible geography">Fit map</button></div><div id="map" role="region" aria-label="Interactive geography map. The same values and selection controls are available in the table below."></div><div class="map-bottom"><div id="legend" class="legend"></div><span id="row-count" class="small muted"></span></div></section><div class="below-map"><section class="panel"><div class="chart-toolbar"><h2>Compare places</h2><select id="compare-mode" aria-label="Comparison chart type"><option value="bar">Bar chart</option><option value="scatter">Scatterplot</option></select></div><label id="y-label" hidden>Compare with<select id="y-metric"></select></label><div id="comparison" class="chart"></div><p class="source-note">Select a bar or point to highlight its geography on the map. Use the table for every value.</p></section><section class="panel"><h2>Distribution</h2><div id="histogram" class="chart"></div><p class="source-note">Select a range to filter the map, charts and table together.</p><div id="selection-detail"></div></section></div><section class="panel table-panel"><div class="panel-head" style="padding:0 0 14px"><div><h2>Data table</h2><p id="table-count"></p></div><button id="select-visible">Select visible places</button></div><div class="table-wrap" id="table"></div><div class="pager"><button id="prev">Previous</button><span id="page-number" class="small"></span><button id="next">Next</button></div><p id="data-source" class="source-note"></p></section></div></div><div id="context-section"></div>`;
   $("#scope").value = state.scope;
   $("#ramp").value = state.ramp;
   $("#binning").value = state.binning;
@@ -145,6 +150,7 @@ function appHtml() {
   );
   setBasemap();
   bind("#geography", "change", async (e) => {
+    resetPlaceSearch();
     state.geo = e.target.value;
     state.selected.clear();
     state.keys = state.keys.filter(
@@ -158,14 +164,45 @@ function appHtml() {
     await loadData(true);
   });
   bind("#scope", "change", (e) => {
+    resetPlaceSearch();
     state.scope = e.target.value;
     state.selected.clear();
     renderAll(true);
   });
   bind("#place-search", "input", (e) => {
-    state.search = e.target.value;
-    state.pageIndex = 0;
-    renderAll();
+    clearTimeout(placeTimer);
+    placeRequest++;
+    $("#place-results").replaceChildren();
+    const query = e.target.value.trim();
+    if (!query) {
+      state.search = "";
+      state.selected.clear();
+      state.pageIndex = 0;
+      $("#place-status").textContent = "";
+      renderAll(true);
+    } else if (query.length < 2) {
+      $("#place-status").textContent = "Enter at least two letters or digits.";
+    } else {
+      $("#place-status").textContent = "Finding places…";
+      placeTimer = setTimeout(() => findPlaces(), 200);
+    }
+  });
+  bind("#place-form", "submit", (e) => {
+    e.preventDefault();
+    clearTimeout(placeTimer);
+    findPlaces(true);
+  });
+  bind("#place-search", "keydown", (e) => {
+    if (e.key === "ArrowDown" && $("#place-results button")) {
+      e.preventDefault();
+      $("#place-results button").focus();
+    } else if (e.key === "Escape") {
+      clearTimeout(placeTimer);
+      placeRequest++;
+      $("#place-results").replaceChildren();
+      $("#place-status").textContent = "";
+      e.target.value = state.search;
+    }
   });
   bind("#metric", "change", (e) => {
     state.metric = e.target.value;
@@ -195,6 +232,7 @@ function appHtml() {
       renderAll();
     });
   bind("#reset", "click", () => {
+    resetPlaceSearch();
     state.selected.clear();
     state.search = "";
     state.min = "";
@@ -226,6 +264,117 @@ function appHtml() {
     state.pageIndex++;
     renderTable();
   });
+}
+function resetPlaceSearch() {
+  clearTimeout(placeTimer);
+  placeRequest++;
+  state.search = "";
+  state.pageIndex = 0;
+  $("#place-search").value = "";
+  $("#place-results").replaceChildren();
+  $("#place-status").textContent = "";
+}
+function placeEntries(geo, features) {
+  const geography = catalog.geographies.find((g) => g.id === geo);
+  return features.map(({ properties: p }) => ({
+    id: p.GEOID, label: p.label,
+    name: String(p.Name || p.NAME || p.label),
+    geo, geoLabel: geography?.label || geo, region: p.region,
+  }));
+}
+function placesFor(geo) {
+  if (!placeSources.has(geo)) {
+    const request = state.preview
+      ? post("/api/preview", { kind: "geography", catalog, geo })
+      : api("/api/geography?geo=" + encodeURIComponent(geo));
+    const source = request.then((data) => placeEntries(geo, data.features));
+    placeSources.set(geo, source);
+    source.catch(() => {
+      if (placeSources.get(geo) === source) placeSources.delete(geo);
+    });
+  }
+  return placeSources.get(geo);
+}
+async function findPlaces(submitted = false) {
+  const query = $("#place-search").value.trim();
+  const request = ++placeRequest;
+  if (query.length < 2) {
+    $("#place-status").textContent = "Enter at least two letters or digits.";
+    return;
+  }
+  $("#place-status").textContent = "Finding places…";
+  const geographies = [...new Set([state.geo, "City", "County"])]
+    .filter((geo) => catalog.geographies.some((g) => g.id === geo));
+  const sources = await Promise.allSettled(geographies.map(placesFor));
+  if (request !== placeRequest) return;
+  const complete = sources.every((s) => s.status === "fulfilled");
+  const matches = Core.placeMatches(sources.flatMap((s) => s.status === "fulfilled" ? s.value : []), query);
+  const shown = matches.slice(0, 8);
+  $("#place-results").innerHTML = shown.map((p, i) =>
+    `<li><button type="button" data-place="${i}"><strong>${esc(p.name)}</strong><span>${esc(p.geoLabel)}${p.region ? "" : " · Outside Atlanta region"}</span></button></li>`
+  ).join("");
+  $$("[data-place]").forEach((b) => b.addEventListener("click", () => choosePlace(shown[Number(b.dataset.place)])));
+  if (!matches.length) {
+    $("#place-status").textContent = complete
+      ? `No places found for “${query}”. Try another name or geographic ID.`
+      : "Some place data could not be loaded. Press Find to try again.";
+    return;
+  }
+  $("#place-status").textContent =
+    (complete ? "" : "Some place data could not be loaded. ") +
+    (matches.length > shown.length ? `Showing ${shown.length} of ${matches.length} matches. Refine your search or choose a place.`
+      : `${matches.length} ${matches.length === 1 ? "match" : "matches"}. Choose a place below.`);
+  if (submitted && complete && matches.length === 1) {
+    await choosePlace(matches[0]);
+  } else if (submitted) {
+    $("#place-results button")?.focus();
+  }
+}
+async function choosePlace(place) {
+  clearTimeout(placeTimer);
+  const request = ++placeRequest;
+  const previous = { ...state, keys: [...state.keys], selected: new Set(state.selected) };
+  const changed = state.geo !== place.geo;
+  state.geo = place.geo;
+  if (!place.region) state.scope = "state";
+  state.keys = state.keys.filter((key) => key.startsWith("user.") ||
+    catalog.datasets.find((d) => key.startsWith(d.id + "."))?.layers[state.geo] !== undefined);
+  if (!state.keys.some((key) => !key.startsWith("user."))) {
+    const dataset = catalog.datasets.find((d) => d.id === "population" && d.layers[state.geo] !== undefined) ||
+      catalog.datasets.find((d) => d.layers[state.geo] !== undefined);
+    const field = dataset?.fields.find((f) => !f.moe);
+    if (!dataset || !field) {
+      Object.assign(state, previous);
+      $("#place-status").textContent = "No indicators are available for that geography.";
+      return;
+    }
+    state.keys.push(dataset.id + "." + field.name);
+  }
+  state.search = place.label;
+  state.min = state.max = "";
+  state.pageIndex = 0;
+  state.selected = new Set([place.id]);
+  $("#place-results").replaceChildren();
+  $("#place-status").textContent = `Loading ${place.name}…`;
+  const needsData = changed || !state.fields.length ||
+    !state.features.some((f) => f.properties.GEOID === place.id);
+  const loaded = !needsData || await loadData();
+  if (request !== placeRequest) return;
+  const feature = state.features.find((f) => f.properties.GEOID === place.id);
+  if (!loaded || !feature) {
+    Object.assign(state, previous);
+    renderControls();
+    renderAll();
+    $("#place-status").textContent = `Could not load ${place.name}. Your previous view is unchanged. Press Find to try again.`;
+    return;
+  }
+  $("#geography").value = state.geo;
+  $("#scope").value = state.scope;
+  $("#min").value = $("#max").value = "";
+  $("#place-search").value = place.name;
+  renderAll();
+  map.fitBounds(L.geoJSON(feature).getBounds(), { padding: [30, 30], maxZoom: 11 });
+  $("#place-status").textContent = `Showing ${place.name}. ${place.geoLabel} · ${state.scope === "state" ? "All available areas" : "Atlanta 11-county region"}.`;
 }
 function setBasemap() {
   if (baseLayer) map.removeLayer(baseLayer);
@@ -274,6 +423,7 @@ async function loadData(fit = false) {
     );
     if (id !== renderId) return;
     state.features = geo.features;
+    placeSources.set(state.geo, Promise.resolve(placeEntries(state.geo, geo.features)));
     state.data = data.rows;
     state.fields = data.fields;
     state.stale = geo.stale || data.stale;
@@ -297,11 +447,13 @@ async function loadData(fit = false) {
       state.y = state.fields[1]?.id || state.metric;
     renderControls();
     renderAll(fit);
+    return true;
   } catch (e) {
     if (id !== renderId) return;
     $("#map-title").textContent = "Data could not be loaded";
     $("#map-subtitle").textContent = e.message;
     toast(e.message);
+    return false;
   }
 }
 function renderControls() {
@@ -414,7 +566,7 @@ function renderMap() {
     (currentField().period || "Your data") +
     " · " +
     catalog.geographies.find((g) => g.id === state.geo)?.label;
-  $("#row-count").textContent = rows.length + " places";
+  $("#row-count").textContent = rows.length + (rows.length === 1 ? " place" : " places");
   const vals = rows
       .map((r) => number(r[state.metric]))
       .filter((v) => v !== null),
@@ -574,7 +726,7 @@ function renderTable() {
   $("#table").innerHTML =
     `<table><thead><tr><th>Select</th><th><button data-sort="Name">Place ${state.sort === "Name" ? (state.desc ? "↓" : "↑") : ""}</button></th>${state.fields.map((f) => `<th><button data-sort="${esc(f.id)}">${esc(fieldLabel(f.id))} ${state.sort === f.id ? (state.desc ? "↓" : "↑") : ""}</button></th>`).join("")}</tr></thead><tbody>${shown.map((r) => `<tr class="${state.selected.has(r.GEOID) ? "selected" : ""}"><td><input type="checkbox" data-select="${esc(r.GEOID)}" aria-label="Select ${esc(r.Name)}" ${state.selected.has(r.GEOID) ? "checked" : ""}></td><td><button data-zoom="${esc(r.GEOID)}">${esc(r.Name)}</button><br><small class="muted">${esc(r.GEOID)}</small></td>${state.fields.map((f) => `<td class="num">${esc(fmt(r[f.id], f.unit))}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
   $("#table-count").textContent =
-    rows.length + " places · " + state.fields.length + " indicators";
+    rows.length + (rows.length === 1 ? " place · " : " places · ") + state.fields.length + " indicators";
   $("#page-number").textContent =
     "Page " + (state.pageIndex + 1) + " of " + pages;
   $("#prev").disabled = state.pageIndex === 0;

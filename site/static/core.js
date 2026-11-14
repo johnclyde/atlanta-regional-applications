@@ -77,6 +77,27 @@
             number(r[state.metric]) <= Number(state.max))),
     );
   }
+  function placeMatches(places, query) {
+    const normalize = (value) => String(value ?? "").normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "").toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ").trim();
+    const q = normalize(query);
+    if (!q) return [];
+    const words = q.split(/\s+/);
+    const unique = [...new Map(places.map((p) => [p.geo + ":" + p.id, p])).values()];
+    const exact = unique.filter((p) => normalize(p.name) === q || normalize(p.id) === q);
+    if (exact.length) return exact;
+    const rank = (p) => {
+      const name = normalize(p.name);
+      return name === q ? 0 : name.startsWith(q) ? 1 : 2;
+    };
+    return unique.filter((p) => {
+      const text = normalize(p.name + " " + p.label + " " + p.id);
+      return words.every((word) => text.includes(word));
+    }).sort((a, b) => rank(a) - rank(b) ||
+      Number(b.geo === "City") - Number(a.geo === "City") ||
+      a.name.localeCompare(b.name) || a.geo.localeCompare(b.geo));
+  }
   function joinRows(features, values, custom) {
     const byId = new Map(values.map((v) => [String(v.GEOID), v]));
     const own = new Map(
@@ -130,6 +151,7 @@
     color,
     ramps,
     filterRows,
+    placeMatches,
     joinRows,
     validateSession,
     progress,
